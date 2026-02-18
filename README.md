@@ -10,6 +10,8 @@
 
 The first MCP server for Substack's official [Publisher API](https://publisher-api.substack.com/v1/docs/). Query post analytics, subscriber counts, and publication data directly from Claude, Cursor, or any MCP client.
 
+![Demo of substack-publisher-mcp in Claude Code](demo.gif)
+
 ## Why this server?
 
 | | substack-publisher-mcp | Other Substack MCP servers |
