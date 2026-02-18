@@ -1,0 +1,35 @@
+{
+  "name": "substack-publisher-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Substack's official Publisher API",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "substack-publisher-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "substack",
+    "newsletter",
+    "api",
+    "analytics",
+    "model-context-protocol"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
