@@ -16,13 +16,13 @@ The first MCP server for Substack's official [Publisher API](https://publisher-a
 |---|---|---|
 | **API** | Official Publisher API | Unofficial internal API |
 | **Auth** | API key (stable) | Browser cookies (fragile) |
-| **Stability** | Supported by Substack | Breaks when Substack changes internals |
+| **Stability** | Official, documented API | Breaks when Substack changes internals |
 | **Multi-publication** | Built-in support | Not available |
 
 ## Prerequisites
 
 - **Node.js 18+**
-- **Substack Publisher API key** — Generate one from your Substack publisher dashboard under Settings > Developer API
+- **Substack Publisher API key** — Available from the [Publisher API docs](https://publisher-api.substack.com/v1/docs/)
 
 ## Quick Start
 
