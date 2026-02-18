@@ -10,7 +10,7 @@ MCP server for Substack's official Publisher API. Query posts, analytics, and su
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/substack-publisher-mcp.git
+git clone https://github.com/dkships/substack-publisher-mcp.git
 cd substack-publisher-mcp
 npm install
 npm run build

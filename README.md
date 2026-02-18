@@ -183,7 +183,7 @@ Use `list_publications` to see all configured publication names.
 ## Development
 
 ```bash
-git clone https://github.com/yourusername/substack-publisher-mcp.git
+git clone https://github.com/dkships/substack-publisher-mcp.git
 cd substack-publisher-mcp
 npm install
 npm run build

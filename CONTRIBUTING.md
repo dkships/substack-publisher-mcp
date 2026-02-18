@@ -7,7 +7,7 @@ Thanks for your interest in contributing!
 1. Clone the repo and install dependencies:
 
 ```bash
-git clone https://github.com/yourusername/substack-publisher-mcp.git
+git clone https://github.com/dkships/substack-publisher-mcp.git
 cd substack-publisher-mcp
 npm install
 ```
