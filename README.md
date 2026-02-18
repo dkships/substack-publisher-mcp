@@ -2,7 +2,6 @@
 
 **MCP server for Substack's official Publisher API**
 
-[![npm version](https://img.shields.io/npm/v/substack-publisher-mcp)](https://www.npmjs.com/package/substack-publisher-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 [![MCP](https://img.shields.io/badge/MCP-compatible-purple)](https://modelcontextprotocol.io)
@@ -20,17 +19,31 @@ The first MCP server for Substack's official [Publisher API](https://publisher-a
 | **Stability** | Supported by Substack | Breaks when Substack changes internals |
 | **Multi-publication** | Built-in support | Not available |
 
+## Prerequisites
+
+- **Node.js 18+**
+- **Substack Publisher API key** — Generate one from your Substack publisher dashboard under Settings > Developer API
+
 ## Quick Start
 
-### 1. Get your API key
+### 1. Install
 
-Go to your Substack publisher dashboard and generate a Publisher API key.
+```bash
+git clone https://github.com/dkships/substack-publisher-mcp.git
+cd substack-publisher-mcp
+npm install && npm run build
+```
 
-### 2. Add to your MCP client
+### 2. Configure your MCP client
 
-#### Claude Desktop
+Add to your client's MCP config file:
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+| Client | Config file |
+|--------|-------------|
+| Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Claude Code | `.mcp.json` in your project directory |
+| Cursor | `.cursor/mcp.json` |
 
 ```json
 {
@@ -46,42 +59,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-#### Claude Code
-
-Add to `.mcp.json` in your project directory:
-
-```json
-{
-  "mcpServers": {
-    "substack": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/path/to/substack-publisher-mcp/dist/index.js"],
-      "env": {
-        "SUBSTACK_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
-```
-
-#### Cursor
-
-Add to `.cursor/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "substack": {
-      "command": "node",
-      "args": ["/path/to/substack-publisher-mcp/dist/index.js"],
-      "env": {
-        "SUBSTACK_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
-```
+> **Claude Code users:** Add `"type": "stdio"` to the server config.
 
 ### 3. Start using it
 
@@ -102,55 +80,61 @@ All tools accept an optional `publication` parameter when multiple publications 
 
 ### Example responses
 
-#### `get_subscriber_counts`
+<details>
+<summary><code>get_subscriber_counts</code></summary>
 
 ```json
 [
   {
-    "date": "2026-02-18",
-    "total_email_subscribers": 57305,
-    "paid_subscribers": 1163,
-    "free_trial_subscribers": 2,
-    "comp_subscribers": 144,
-    "gift_subscribers": 5,
+    "date": "2025-01-15",
+    "total_email_subscribers": 25000,
+    "paid_subscribers": 500,
+    "free_trial_subscribers": 10,
+    "comp_subscribers": 50,
+    "gift_subscribers": 15,
     "lifetime_subscribers": 0,
-    "founding_subscribers": 10
+    "founding_subscribers": 25
   }
 ]
 ```
+</details>
 
-#### `get_post_stats`
+<details>
+<summary><code>get_post_stats</code></summary>
 
 ```json
 {
-  "clicks": 142,
-  "opens": 8453,
-  "post_id": 188286338,
-  "recipients": 12500,
-  "views": 9200,
-  "new_free_subscriptions": 45,
-  "new_paid_subscriptions": 3,
-  "estimated_revenue_increase": 240
+  "clicks": 320,
+  "opens": 5400,
+  "post_id": 12345678,
+  "recipients": 10000,
+  "views": 6100,
+  "new_free_subscriptions": 80,
+  "new_paid_subscriptions": 5,
+  "estimated_revenue_increase": 400
 }
 ```
+</details>
 
-#### `list_posts`
+<details>
+<summary><code>list_posts</code></summary>
 
 ```json
 {
   "posts": [
     {
-      "title": "Example Post",
+      "title": "My Latest Post",
       "audience": "only_paid",
-      "subtitle": "A great subtitle",
-      "postDate": "2026-02-17T17:17:07.430Z",
-      "urlSlug": "example-post",
-      "coverImage": "https://..."
+      "subtitle": "A deep dive into the topic",
+      "postDate": "2025-01-15T12:00:00.000Z",
+      "urlSlug": "my-latest-post",
+      "coverImage": "https://substackcdn.com/image/..."
     }
   ],
-  "next": "cursor-for-next-page"
+  "next": "abc123cursor"
 }
 ```
+</details>
 
 ## Multiple publications
 
@@ -160,7 +144,6 @@ If you manage multiple Substack publications, configure a separate API key for e
 {
   "mcpServers": {
     "substack": {
-      "type": "stdio",
       "command": "node",
       "args": ["/path/to/substack-publisher-mcp/dist/index.js"],
       "env": {
@@ -180,14 +163,14 @@ Then specify which publication to query:
 
 Use `list_publications` to see all configured publication names.
 
-## Development
+## Troubleshooting
 
-```bash
-git clone https://github.com/dkships/substack-publisher-mcp.git
-cd substack-publisher-mcp
-npm install
-npm run build
-```
+| Issue | Solution |
+|-------|----------|
+| `Unauthorized` error | Verify your API key is correct. The key goes directly in the `authorization` header with no `Bearer` prefix. |
+| `Missing environment variables` warning | Only configure env vars for publications you have keys for. Remove the rest. |
+| Server won't start | Make sure you ran `npm run build` after cloning. The server runs from `dist/`, not `src/`. |
+| `No API keys configured` | Set `SUBSTACK_API_KEY` or `SUBSTACK_API_KEY_<NAME>` in your MCP client config. |
 
 ## API Reference
 
