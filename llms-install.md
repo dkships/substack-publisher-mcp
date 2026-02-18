@@ -27,8 +27,8 @@ SUBSTACK_API_KEY=your-api-key-here
 For multiple publications, use the naming pattern:
 
 ```
-SUBSTACK_API_KEY_NY=your-ny-key
-SUBSTACK_API_KEY_LA=your-la-key
+SUBSTACK_API_KEY_MAIN=your-main-blog-key
+SUBSTACK_API_KEY_TECH=your-tech-newsletter-key
 ```
 
 ## MCP Client Configuration

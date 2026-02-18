@@ -147,9 +147,9 @@ If you manage multiple Substack publications, configure a separate API key for e
       "command": "node",
       "args": ["/path/to/substack-publisher-mcp/dist/index.js"],
       "env": {
-        "SUBSTACK_API_KEY_NY": "your-ny-key",
-        "SUBSTACK_API_KEY_LA": "your-la-key",
-        "SUBSTACK_API_KEY_SF": "your-sf-key"
+        "SUBSTACK_API_KEY_MAIN": "your-main-blog-key",
+        "SUBSTACK_API_KEY_TECH": "your-tech-newsletter-key",
+        "SUBSTACK_API_KEY_COMPANY": "your-company-updates-key"
       }
     }
   }
@@ -158,8 +158,8 @@ If you manage multiple Substack publications, configure a separate API key for e
 
 Then specify which publication to query:
 
-> *"Show me subscriber counts for NY"*
-> *"List recent posts from the LA publication"*
+> *"Show me subscriber counts for main"*
+> *"List recent posts from the tech publication"*
 
 Use `list_publications` to see all configured publication names.
 
