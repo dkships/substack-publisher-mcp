@@ -19,6 +19,8 @@ MCP server providing Substack Publisher API access. Enables agents to interact w
 - Handle errors with `isError: true` responses
 - Use `registerTool` / `registerResource` for MCP registration
 - Test manually via MCP client after changes
+- The global Codex config has a disabled `found-substack` MCP template pointing at `dist/index.js`; run `npm run build` after source changes before testing through Codex MCP.
+- Use inherited `SUBSTACK_API_KEY_*` env vars; never copy token values into config or docs.
 
 ## Hallucination Prevention
 See `~/.agents/AGENTS.md`. For this MCP server: sources = code and Substack API responses.
@@ -29,4 +31,4 @@ See `~/.agents/AGENTS.md`. For this MCP server: sources = code and Substack API 
 
 ## Maintenance
 - Owner: David Kelly
-- Last Updated: 2026-03-28
+- Last Updated: 2026-04-26
