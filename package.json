@@ -19,15 +19,23 @@
     "analytics",
     "model-context-protocol"
   ],
-  "author": "",
+  "author": "David Kelly <contact@dmkthinks.org>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dkships/substack-publisher-mcp.git"
+  },
+  "homepage": "https://github.com/dkships/substack-publisher-mcp",
+  "bugs": {
+    "url": "https://github.com/dkships/substack-publisher-mcp/issues"
+  },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.11.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
   },
   "engines": {
     "node": ">=18"

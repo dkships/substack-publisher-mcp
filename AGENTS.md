@@ -6,8 +6,8 @@ MCP server providing Substack Publisher API access. Enables agents to interact w
 ## Tech Stack
 - TypeScript, ES modules, Node 18+
 - `@modelcontextprotocol/sdk` with stdio transport
-- Hono (HTTP framework)
-- Express for MCP transport
+- `zod` for input validation
+- Native `fetch` for Substack Publisher API calls (no HTTP framework)
 
 ## Scope And Boundaries
 - This is a self-managed repo (dkships/substack-publisher-mcp)

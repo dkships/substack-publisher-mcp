@@ -122,10 +122,14 @@ const server = new McpServer({
 });
 
 // Tool 1: list_publications
-server.tool(
+server.registerTool(
   "list_publications",
-  "List all configured Substack publications and their names. Use these names as the 'publication' parameter in other tools.",
-  {},
+  {
+    title: "List Publications",
+    description:
+      "List all configured Substack publications and their names. Use these names as the 'publication' parameter in other tools.",
+    inputSchema: {},
+  },
   async () => {
     if (publications.length === 0) {
       return {
@@ -168,43 +172,47 @@ server.tool(
 );
 
 // Tool 2: list_posts
-server.tool(
+server.registerTool(
   "list_posts",
-  "List posts published by a Substack publication. Returns post metadata including title, URL slug, audience, publish date, and type. Use the urlSlug from results with get_post or get_post_stats for details.",
   {
-    publication: z
-      .string()
-      .optional()
-      .describe(
-        "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
-      ),
-    startDate: z
-      .string()
-      .optional()
-      .describe("Filter posts published on or after this date (YYYY-MM-DD)."),
-    endDate: z
-      .string()
-      .optional()
-      .describe("Filter posts published on or before this date (YYYY-MM-DD)."),
-    sortBy: z
-      .enum(["newest", "oldest"])
-      .optional()
-      .describe("Sort order. Defaults to newest."),
-    type: z
-      .enum(["newsletter", "podcast", "video"])
-      .optional()
-      .describe("Filter by post type."),
-    maxResults: z
-      .number()
-      .int()
-      .optional()
-      .describe("Maximum number of posts to return. Default 100."),
-    next: z
-      .string()
-      .optional()
-      .describe(
-        "Pagination cursor from a previous list_posts response. Pass this to get the next page of results."
-      ),
+    title: "List Posts",
+    description:
+      "List posts published by a Substack publication. Returns post metadata including title, URL slug, audience, publish date, and type. Use the urlSlug from results with get_post or get_post_stats for details.",
+    inputSchema: {
+      publication: z
+        .string()
+        .optional()
+        .describe(
+          "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
+        ),
+      startDate: z
+        .string()
+        .optional()
+        .describe("Filter posts published on or after this date (YYYY-MM-DD)."),
+      endDate: z
+        .string()
+        .optional()
+        .describe("Filter posts published on or before this date (YYYY-MM-DD)."),
+      sortBy: z
+        .enum(["newest", "oldest"])
+        .optional()
+        .describe("Sort order. Defaults to newest."),
+      type: z
+        .enum(["newsletter", "podcast", "video"])
+        .optional()
+        .describe("Filter by post type."),
+      maxResults: z
+        .number()
+        .int()
+        .optional()
+        .describe("Maximum number of posts to return. Default 100."),
+      next: z
+        .string()
+        .optional()
+        .describe(
+          "Pagination cursor from a previous list_posts response. Pass this to get the next page of results."
+        ),
+    },
   },
   async ({ publication, startDate, endDate, sortBy, type, maxResults, next }) => {
     try {
@@ -235,21 +243,25 @@ server.tool(
 );
 
 // Tool 3: get_post
-server.tool(
+server.registerTool(
   "get_post",
-  "Get detailed information about a specific post by its URL slug. Returns full post metadata including title, subtitle, audience, publish date, and content details.",
   {
-    publication: z
-      .string()
-      .optional()
-      .describe(
-        "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
-      ),
-    urlSlug: z
-      .string()
-      .describe(
-        "The URL slug of the post (from list_posts results or the post URL)."
-      ),
+    title: "Get Post",
+    description:
+      "Get detailed information about a specific post by its URL slug. Returns full post metadata including title, subtitle, audience, publish date, and content details.",
+    inputSchema: {
+      publication: z
+        .string()
+        .optional()
+        .describe(
+          "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
+        ),
+      urlSlug: z
+        .string()
+        .describe(
+          "The URL slug of the post (from list_posts results or the post URL)."
+        ),
+    },
   },
   async ({ publication, urlSlug }) => {
     try {
@@ -273,21 +285,25 @@ server.tool(
 );
 
 // Tool 4: get_post_stats
-server.tool(
+server.registerTool(
   "get_post_stats",
-  "Get engagement statistics for a specific post by its URL slug. Returns metrics like opens, clicks, and other engagement data.",
   {
-    publication: z
-      .string()
-      .optional()
-      .describe(
-        "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
-      ),
-    urlSlug: z
-      .string()
-      .describe(
-        "The URL slug of the post (from list_posts results or the post URL)."
-      ),
+    title: "Get Post Stats",
+    description:
+      "Get engagement statistics for a specific post by its URL slug. Returns metrics like opens, clicks, and other engagement data.",
+    inputSchema: {
+      publication: z
+        .string()
+        .optional()
+        .describe(
+          "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
+        ),
+      urlSlug: z
+        .string()
+        .describe(
+          "The URL slug of the post (from list_posts results or the post URL)."
+        ),
+    },
   },
   async ({ publication, urlSlug }) => {
     try {
@@ -314,24 +330,28 @@ server.tool(
 );
 
 // Tool 5: get_subscriber_counts
-server.tool(
+server.registerTool(
   "get_subscriber_counts",
-  "Get daily subscriber counts broken down by subscription type (free, paid, etc.). Useful for tracking growth and churn over time.",
   {
-    publication: z
-      .string()
-      .optional()
-      .describe(
-        "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
-      ),
-    startDate: z
-      .string()
-      .optional()
-      .describe("Start of date range (YYYY-MM-DD)."),
-    endDate: z
-      .string()
-      .optional()
-      .describe("End of date range (YYYY-MM-DD)."),
+    title: "Get Subscriber Counts",
+    description:
+      "Get daily subscriber counts broken down by subscription type (free, paid, etc.). Useful for tracking growth and churn over time.",
+    inputSchema: {
+      publication: z
+        .string()
+        .optional()
+        .describe(
+          "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
+        ),
+      startDate: z
+        .string()
+        .optional()
+        .describe("Start of date range (YYYY-MM-DD)."),
+      endDate: z
+        .string()
+        .optional()
+        .describe("End of date range (YYYY-MM-DD)."),
+    },
   },
   async ({ publication, startDate, endDate }) => {
     try {
@@ -358,17 +378,21 @@ server.tool(
 );
 
 // Tool 6: get_subscriber
-server.tool(
+server.registerTool(
   "get_subscriber",
-  "Look up a specific subscriber by email address. Returns their subscription details including type, status, and social handles.",
   {
-    publication: z
-      .string()
-      .optional()
-      .describe(
-        "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
-      ),
-    email: z.string().describe("The subscriber's email address."),
+    title: "Get Subscriber",
+    description:
+      "Look up a specific subscriber by email address. Returns their subscription details including type, status, and social handles.",
+    inputSchema: {
+      publication: z
+        .string()
+        .optional()
+        .describe(
+          "Publication name (e.g., 'ny', 'la'). Required if multiple publications are configured."
+        ),
+      email: z.string().describe("The subscriber's email address."),
+    },
   },
   async ({ publication, email }) => {
     try {
