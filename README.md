@@ -67,6 +67,8 @@ Add to your client's MCP config file:
 
 Ask Claude: *"Show me my recent posts"* or *"What are my subscriber counts for the last 30 days?"*
 
+> Installing through an AI agent or registry? See [llms-install.md](llms-install.md) for a condensed, machine-readable setup guide.
+
 ## Tools
 
 | Tool | Description | Key Parameters |
