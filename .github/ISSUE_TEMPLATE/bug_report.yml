@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a defect in substack-publisher-mcp
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting: please redact any API keys, subscriber data, or post content from the inputs below.
+
+        Security issues: do not file here. See [SECURITY.md](../blob/main/SECURITY.md) for the private disclosure path.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Describe the bug. What did you run, what did you expect, what actually happened?
+      placeholder: |
+        I called `get_post_stats` with urlSlug=my-post and got ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce
+      description: Minimal steps to reproduce the issue.
+      placeholder: |
+        1. Configure SUBSTACK_API_KEY for publication X
+        2. Run tool Y with input Z
+        3. Observe error
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: substack-publisher-mcp version
+      description: The release tag or commit SHA you are running.
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node version
+      description: Output of `node --version`.
+    validations:
+      required: true
+
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      description: Which client are you using (Claude Desktop, Claude Code, Cursor, ...)?
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      description: Redact any API keys, subscriber data, or post content before pasting.
+      render: shell
+    validations:
+      required: false
