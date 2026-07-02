@@ -11,7 +11,7 @@ MCP server providing Substack Publisher API access. Enables agents to interact w
 
 ## Scope And Boundaries
 - This is a self-managed repo (dkships/substack-publisher-mcp)
-- Keep secrets out of committed files — use `.env` via dotenv
+- Keep secrets out of committed files — env vars come from the MCP client config or shell (the server never loads `.env`)
 - Return raw structured data from tools — let the LLM do synthesis
 
 ## Working Rules
@@ -27,8 +27,9 @@ See `~/.agents/AGENTS.md`. For this MCP server: sources = code and Substack API 
 
 ## Definition Of Done
 - Changes compile (`npm run build`)
+- Tests pass (`npm test`)
 - MCP server starts without errors (`npm start`)
 
 ## Maintenance
 - Owner: David Kelly
-- Last Updated: 2026-05-02
+- Last Updated: 2026-07-01

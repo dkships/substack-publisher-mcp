@@ -7,6 +7,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Security
 
 - Patched 5 transitive dependency advisories via `npm audit fix` (`ip-address`, `express-rate-limit`, `qs`). `npm audit` now reports zero vulnerabilities.
+- Patched the `hono` transitive dependency advisory via `npm audit fix`; `npm audit` again reports zero vulnerabilities.
 
 ### Added
 
@@ -14,10 +15,25 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1).
 - This `CHANGELOG.md`.
 - `.github/` directory: CI workflow (build + audit on PRs to `main`), Dependabot config (weekly npm + Actions bumps), issue templates, and a pull request template.
+- Unit tests (`node:test` via `tsx`) covering key loading, publication resolution, API error mapping, and the tool result envelope; CI runs them on Node 20 and 22.
+- Tool annotations (`readOnlyHint`, `idempotentHint`, `openWorldHint`) on all six tools so MCP clients can treat them as safe reads.
+- 30-second timeout on Substack API requests.
+- npm publish prep: `files`, `prepublishOnly`, and `mcpName` fields in package.json (not yet published).
 
 ### Changed
 
 - README links the LLM-client install guide (`llms-install.md`).
+- Extracted env key loading, the API client, and result helpers into `src/substack.ts`; deduplicated the per-tool error envelope. No protocol-visible changes.
+- Server version is read from package.json instead of a hard-coded string.
+- API error messages truncate response bodies at 500 characters.
+- Tightened input validation: dates must be `YYYY-MM-DD`, `maxResults` must be at least 1, `email` must be a valid address.
+- CI: the blocking `npm audit` now covers runtime dependencies only; a full-tree audit runs as informational.
+- README: clearer prerequisites, example prompts for all six tools, and expanded troubleshooting.
+
+### Fixed
+
+- `list_publications` now returns `isError: true` when no API keys are configured.
+- Removed stale dotenv/`.env` references from contributor docs (the server reads env vars directly and never loaded `.env`); deleted `.env.example`.
 
 ## [1.0.0] — 2026-02-18
 

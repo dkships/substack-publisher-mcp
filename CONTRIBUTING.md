@@ -12,12 +12,17 @@ cd substack-publisher-mcp
 npm install
 ```
 
-2. Create a `.env` file (see `.env.example` for the template).
+2. Export your API key in your shell (the server reads env vars directly; it does not load `.env` files):
+
+```bash
+export SUBSTACK_API_KEY=your-key
+```
 
 3. Build and test:
 
 ```bash
 npm run build
+npm test
 npm start
 ```
 
@@ -40,5 +45,5 @@ Open a GitHub issue with:
 
 1. Fork the repo and create a feature branch
 2. Make your changes
-3. Ensure `npm run build` passes with zero errors
+3. Ensure `npm run build` and `npm test` pass with zero errors
 4. Submit a PR with a clear description of the change

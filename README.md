@@ -23,8 +23,8 @@ The first MCP server for Substack's official [Publisher API](https://publisher-a
 
 ## Prerequisites
 
-- **Node.js 18+**
-- **Substack Publisher API key** — Available from the [Publisher API docs](https://publisher-api.substack.com/v1/docs/)
+- **Node.js 18+** — check with `node --version`, install from [nodejs.org](https://nodejs.org) if missing
+- **Substack Publisher API key** — generated from your publication's Substack dashboard. If you don't see a Publisher API option there, it may not be enabled for your publication yet; see the [Publisher API docs](https://publisher-api.substack.com/v1/docs/) for availability.
 
 ## Quick Start
 
@@ -38,7 +38,7 @@ npm install && npm run build
 
 ### 2. Configure your MCP client
 
-Add to your client's MCP config file:
+Add to your client's MCP config file (create the file if it doesn't exist):
 
 | Client | Config file |
 |--------|-------------|
@@ -63,9 +63,18 @@ Add to your client's MCP config file:
 
 > **Claude Code users:** Add `"type": "stdio"` to the server config.
 
+Restart your MCP client after editing the config — servers load at startup.
+
 ### 3. Start using it
 
-Ask Claude: *"Show me my recent posts"* or *"What are my subscriber counts for the last 30 days?"*
+Ask Claude (or your MCP client):
+
+- *"Which Substack publications do I have configured?"*
+- *"Show me my posts from the last month"*
+- *"Pull up my post with the slug my-latest-post"*
+- *"How many opens and clicks did my latest post get?"*
+- *"What are my subscriber counts for the last 30 days?"*
+- *"Look up subscriber jane@example.com"*
 
 > Installing through an AI agent or registry? See [llms-install.md](llms-install.md) for a condensed, machine-readable setup guide.
 
@@ -80,7 +89,7 @@ Ask Claude: *"Show me my recent posts"* or *"What are my subscriber counts for t
 | `get_subscriber_counts` | Get daily subscriber counts by type | `startDate`, `endDate` |
 | `get_subscriber` | Look up a subscriber by email | `email` (required) |
 
-All tools accept an optional `publication` parameter when multiple publications are configured.
+All tools except `list_publications` accept an optional `publication` parameter when multiple publications are configured.
 
 ### Example responses
 
@@ -175,6 +184,9 @@ Use `list_publications` to see all configured publication names.
 | `Missing environment variables` warning | Only configure env vars for publications you have keys for. Remove the rest. |
 | Server won't start | Make sure you ran `npm run build` after cloning. The server runs from `dist/`, not `src/`. |
 | `No API keys configured` | Set `SUBSTACK_API_KEY` or `SUBSTACK_API_KEY_<NAME>` in your MCP client config. |
+| Server doesn't appear in your client | Check the config file is valid JSON (no trailing commas), then restart the client. |
+| `command not found` / `spawn node ENOENT` | Node.js isn't installed or isn't on your PATH. Check `node --version`. |
+| Still stuck | Check your client's MCP logs. Claude Desktop on macOS: `~/Library/Logs/Claude/mcp*.log`. |
 
 ## API Reference
 

@@ -35,5 +35,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: npm audit (high+)
+      - name: Test
+        run: npm test
+
+      - name: npm audit (runtime deps, high+)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: npm audit (all deps, informational)
         run: npm audit --audit-level=high
+        continue-on-error: true

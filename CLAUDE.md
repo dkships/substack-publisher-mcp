@@ -6,7 +6,7 @@
 
 ```bash
 npm run build     # Compile TypeScript
-npm run dev       # Watch mode
+npm test          # Run unit tests (node:test via tsx)
 npm start         # Run the server
 ```
 
@@ -14,12 +14,14 @@ npm start         # Run the server
 
 ```
 src/
-  index.ts        # MCP server entry point, tool registration
+  index.ts          # MCP server entry point, tool registration
+  substack.ts       # Env key loading, Substack API client, result helpers
+  substack.test.ts  # Unit tests
 ```
 
 ## Environment Variables
-- Loaded from `.env` via dotenv
-- Never commit `.env` (gitignored)
+- Read directly from `process.env`: set them in the MCP client config, or in your shell for `npm start`. The server does not load `.env` files.
+- Never commit API keys.
 
 ## Conventions
 
