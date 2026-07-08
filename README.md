@@ -23,8 +23,8 @@ The first MCP server for Substack's official [Publisher API](https://publisher-a
 
 ## Prerequisites
 
-- **Node.js 18+** — check with `node --version`, install from [nodejs.org](https://nodejs.org) if missing
-- **Substack Publisher API key** — generated from your publication's Substack dashboard. If you don't see a Publisher API option there, it may not be enabled for your publication yet; see the [Publisher API docs](https://publisher-api.substack.com/v1/docs/) for availability.
+- **Node.js 18+.** Check with `node --version`; install from [nodejs.org](https://nodejs.org) if missing.
+- **Substack Publisher API key.** Generate one from your publication's Substack dashboard. If you don't see a Publisher API option there, it may not be enabled for your publication yet; see the [Publisher API docs](https://publisher-api.substack.com/v1/docs/) for availability.
 
 ## Quick Start
 
