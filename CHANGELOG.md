@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
-## [Unreleased]
+## [1.1.0] - 2026-07-09
 
 ### Security
 
@@ -22,6 +22,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- Upgraded zod from 3 to 4. Validation errors for bad tool inputs use zod 4's message wording, so the text differs from 1.0.0.
+- `tsconfig.json` sets `"types": ["node"]` explicitly, which TypeScript 6 requires.
 - README links the LLM-client install guide (`llms-install.md`).
 - Extracted env key loading, the API client, and result helpers into `src/substack.ts`; deduplicated the per-tool error envelope. No protocol-visible changes.
 - Server version is read from package.json instead of a hard-coded string.
