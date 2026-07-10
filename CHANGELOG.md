@@ -23,7 +23,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Changed
 
 - Upgraded zod from 3 to 4. Validation errors for bad tool inputs use zod 4's message wording, so the text differs from 1.0.0.
-- `tsconfig.json` sets `"types": ["node"]` explicitly, which TypeScript 6 requires.
+- `tsconfig.json` sets `"types": ["node"]` explicitly, which TypeScript 6 and later require (this release ships 7.0.2).
 - README links the LLM-client install guide (`llms-install.md`).
 - Extracted env key loading, the API client, and result helpers into `src/substack.ts`; deduplicated the per-tool error envelope. No protocol-visible changes.
 - Server version is read from package.json instead of a hard-coded string.
