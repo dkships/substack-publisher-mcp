@@ -1,0 +1,29 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.dkships/substack-publisher-mcp",
+  "description": "MCP server for Substack's official Publisher API",
+  "repository": {
+    "url": "https://github.com/dkships/substack-publisher-mcp",
+    "source": "github"
+  },
+  "version": "1.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "substack-publisher-mcp",
+      "version": "1.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "description": "Substack Publisher API key",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true,
+          "name": "SUBSTACK_API_KEY"
+        }
+      ]
+    }
+  ]
+}
