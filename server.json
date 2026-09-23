@@ -6,18 +6,18 @@
     "url": "https://github.com/dkships/substack-publisher-mcp",
     "source": "github"
   },
-  "version": "1.1.0",
+  "version": "1.2.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "substack-publisher-mcp",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
-          "description": "Substack Publisher API key",
+          "description": "Substack Publisher API key. For several publications, set SUBSTACK_API_KEY_<NAME> per publication instead.",
           "isRequired": true,
           "format": "string",
           "isSecret": true,

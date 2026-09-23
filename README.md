@@ -3,12 +3,12 @@
 **MCP server for Substack's official Publisher API**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org)
 [![MCP](https://img.shields.io/badge/MCP-compatible-purple)](https://modelcontextprotocol.io)
 
 > **Note:** This is an unofficial, community-developed tool and is not affiliated with, endorsed by, or supported by Substack, Inc.
 
-The first MCP server for Substack's official [Publisher API](https://publisher-api.substack.com/v1/docs/). Query post analytics, subscriber counts, and publication data directly from Claude, Cursor, or any MCP client.
+An MCP server for Substack's official [Publisher API](https://publisher-api.substack.com/v1/docs/). Search and read posts, pull post analytics and subscriber counts, and look up subscribers from Claude, Cursor, or any MCP client. All tools are read-only.
 
 ![Demo of substack-publisher-mcp in Claude Code](demo.gif)
 
@@ -23,7 +23,7 @@ The first MCP server for Substack's official [Publisher API](https://publisher-a
 
 ## Prerequisites
 
-- **Node.js 18+.** Check with `node --version`; install from [nodejs.org](https://nodejs.org) if missing.
+- **Node.js 22+.** Check with `node --version`; install from [nodejs.org](https://nodejs.org) if missing.
 - **Substack Publisher API key.** Generate one from your publication's Substack dashboard. If you don't see a Publisher API option there, it may not be enabled for your publication yet; see the [Publisher API docs](https://publisher-api.substack.com/v1/docs/) for availability.
 
 ## Quick Start
@@ -71,6 +71,7 @@ Ask Claude (or your MCP client):
 
 - *"Which Substack publications do I have configured?"*
 - *"Show me my posts from the last month"*
+- *"Find my posts about pricing"*
 - *"Pull up my post with the slug my-latest-post"*
 - *"How many opens and clicks did my latest post get?"*
 - *"What are my subscriber counts for the last 30 days?"*
@@ -84,12 +85,17 @@ Ask Claude (or your MCP client):
 |------|-------------|----------------|
 | `list_publications` | List configured publications | None |
 | `list_posts` | List published posts | `startDate`, `endDate`, `sortBy`, `type`, `maxResults`, `next` |
-| `get_post` | Get a specific post by URL slug | `urlSlug` (required) |
+| `search_posts` | Full-text search across published posts | `query` (required), `maxResults` (1-100) |
+| `get_post` | Get a post and its body by URL slug | `urlSlug` (required), `bodyFormat` |
 | `get_post_stats` | Get engagement stats for a post | `urlSlug` (required) |
 | `get_subscriber_counts` | Get daily subscriber counts by type | `startDate`, `endDate` |
 | `get_subscriber` | Look up a subscriber by email | `email` (required) |
 
 All tools except `list_publications` accept an optional `publication` parameter when multiple publications are configured.
+
+`get_post` returns the post body as Markdown by default. Substack sends it as a JSON-encoded ProseMirror document, typically about twice the size. Pass `bodyFormat: "prosemirror"` for the raw document or `"none"` for metadata only.
+
+Date filters take `YYYY-MM-DD`. In `list_posts`, `endDate` is exclusive; in `get_subscriber_counts`, it is inclusive.
 
 ### Example responses
 
@@ -136,6 +142,7 @@ All tools except `list_publications` accept an optional `publication` parameter 
 {
   "posts": [
     {
+      "post_id": 12345678,
       "title": "My Latest Post",
       "audience": "only_paid",
       "subtitle": "A deep dive into the topic",
@@ -147,6 +154,8 @@ All tools except `list_publications` accept an optional `publication` parameter 
   "next": "abc123cursor"
 }
 ```
+
+`next` is `null` on the last page.
 </details>
 
 ## Multiple publications
@@ -181,7 +190,7 @@ Use `list_publications` to see all configured publication names.
 | Issue | Solution |
 |-------|----------|
 | `Unauthorized` error | Verify your API key is correct. The key goes directly in the `authorization` header with no `Bearer` prefix. |
-| `Missing environment variables` warning | Only configure env vars for publications you have keys for. Remove the rest. |
+| `... duplicates publication ...` or `... ignoring it` on startup | Two env vars map to the same publication name (names are case-insensitive, and `SUBSTACK_API_KEY` is `default`), or a key is malformed. Rename or remove the extra variable. |
 | Server won't start | Make sure you ran `npm run build` after cloning. The server runs from `dist/`, not `src/`. |
 | `No API keys configured` | Set `SUBSTACK_API_KEY` or `SUBSTACK_API_KEY_<NAME>` in your MCP client config. |
 | Server doesn't appear in your client | Check the config file is valid JSON (no trailing commas), then restart the client. |

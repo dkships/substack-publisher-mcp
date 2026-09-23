@@ -33,7 +33,7 @@ Expected response: acknowledgement within 5 business days. If the report is vali
 This is a read-only server. It forwards your Substack API key in the `authorization` header and returns whatever the Publisher API sends back. Tool responses can include subscriber-level data such as email addresses and subscriber counts (`get_subscriber`, `get_subscriber_counts`). Treat tool output as sensitive:
 
 - The server does not store, cache, or transmit your data anywhere other than between your MCP client and the Substack Publisher API.
-- The API key is read from environment variables only (`SUBSTACK_API_KEY` / `SUBSTACK_API_KEY_<NAME>`). It is never written to disk or logged.
+- The API key is read from environment variables only (`SUBSTACK_API_KEY` / `SUBSTACK_API_KEY_<NAME>`). It is never written to disk or logged, and it is redacted from error messages if the API echoes it back.
 - The base URL is hardcoded to `https://publisher-api.substack.com/v1`; user input cannot redirect requests to another host.
 - URL path parameters (`urlSlug`, `email`) are `encodeURIComponent`-escaped before they reach the API.
 

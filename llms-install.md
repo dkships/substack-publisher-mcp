@@ -4,7 +4,7 @@ MCP server for Substack's official Publisher API. Query posts, analytics, and su
 
 ## Prerequisites
 
-- Node.js >= 18
+- Node.js >= 22
 - A Substack Publisher API key (from your Substack publisher dashboard)
 
 ## Installation
@@ -51,7 +51,8 @@ SUBSTACK_API_KEY_TECH=your-tech-newsletter-key
 
 - `list_publications` — List configured publications
 - `list_posts` — List published posts with filtering
-- `get_post` — Get a specific post by URL slug
+- `search_posts` — Full-text search across published posts
+- `get_post` — Get a post and its body (Markdown by default) by URL slug
 - `get_post_stats` — Get engagement stats for a post
 - `get_subscriber_counts` — Get daily subscriber counts by type
 - `get_subscriber` — Look up a subscriber by email
