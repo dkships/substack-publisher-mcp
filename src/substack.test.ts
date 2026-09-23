@@ -40,6 +40,52 @@ describe("loadPublications", () => {
     assert.deepEqual(loadPublications({}), []);
     assert.deepEqual(loadPublications({ SUBSTACK_API_KEY_MAIN: "" }), []);
   });
+
+  test("trims keys and skips whitespace-only values and empty names", () => {
+    const warnings: string[] = [];
+    const pubs = loadPublications(
+      {
+        SUBSTACK_API_KEY_MAIN: "  key-main\n",
+        SUBSTACK_API_KEY_TECH: "   ",
+        SUBSTACK_API_KEY_: "key-nameless",
+      },
+      (message) => warnings.push(message)
+    );
+    assert.deepEqual(pubs, [{ name: "main", apiKey: "key-main" }]);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0], /SUBSTACK_API_KEY_ has no publication name/);
+  });
+
+  test("keeps the first key when names collide, and warns", () => {
+    const warnings: string[] = [];
+    const pubs = loadPublications(
+      {
+        SUBSTACK_API_KEY: "key-single",
+        SUBSTACK_API_KEY_DEFAULT: "key-default",
+        SUBSTACK_API_KEY_MAIN: "key-upper",
+        SUBSTACK_API_KEY_main: "key-lower",
+      },
+      (message) => warnings.push(message)
+    );
+    assert.deepEqual(pubs, [
+      { name: "default", apiKey: "key-single" },
+      { name: "main", apiKey: "key-upper" },
+    ]);
+    assert.equal(warnings.length, 2);
+    assert.match(warnings[0], /SUBSTACK_API_KEY_DEFAULT.*"default"/);
+    assert.match(warnings[1], /SUBSTACK_API_KEY_main.*"main"/);
+  });
+
+  test("rejects keys with control characters without echoing them", () => {
+    const warnings: string[] = [];
+    const pubs = loadPublications(
+      { SUBSTACK_API_KEY_MAIN: "sk-secret\r\nX-Evil: 1" },
+      (message) => warnings.push(message)
+    );
+    assert.deepEqual(pubs, []);
+    assert.match(warnings[0], /SUBSTACK_API_KEY_MAIN contains invalid characters/);
+    assert.doesNotMatch(warnings[0], /sk-secret/);
+  });
 });
 
 describe("resolvePublication", () => {
@@ -63,6 +109,10 @@ describe("resolvePublication", () => {
 
   test("matches case-insensitively", () => {
     assert.equal(resolvePublication([main, tech], "TECH"), tech);
+  });
+
+  test("ignores surrounding whitespace in the requested name", () => {
+    assert.equal(resolvePublication([main, tech], " tech "), tech);
   });
 
   test("throws for an unknown name, listing available ones", () => {
@@ -142,13 +192,86 @@ describe("apiRequest", () => {
       }
     );
   });
+
+  test("surfaces the underlying cause of network failures", async () => {
+    mock.method(globalThis, "fetch", async () => {
+      throw new TypeError("fetch failed", {
+        cause: Object.assign(new Error("getaddrinfo ENOTFOUND host"), {
+          code: "ENOTFOUND",
+        }),
+      });
+    });
+    await assert.rejects(
+      () => apiRequest("/posts", "key"),
+      /Network error calling Substack \(\/posts\): getaddrinfo ENOTFOUND host/
+    );
+  });
+
+  test("redacts the API key from error messages", async () => {
+    mockFetch(new Response("invalid key: sk-secret", { status: 400 }));
+    await assert.rejects(
+      () => apiRequest("/posts", "sk-secret"),
+      (error: Error) => {
+        assert.doesNotMatch(error.message, /sk-secret/);
+        assert.match(error.message, /\[REDACTED\]/);
+        return true;
+      }
+    );
+  });
+
+  test("redacts a key that straddles the truncation boundary", async () => {
+    const key = "sk-abcdefghijklmnopqrstuvwxyz0123456789";
+    mockFetch(new Response("x".repeat(480) + key, { status: 400 }));
+    await assert.rejects(
+      () => apiRequest("/posts", key),
+      (error: Error) => {
+        assert.doesNotMatch(error.message, /sk-abc/);
+        return true;
+      }
+    );
+  });
+
+  test("returns null for an empty success body", async () => {
+    mockFetch(new Response(null, { status: 204 }));
+    assert.equal(await apiRequest("/posts", "key"), null);
+  });
+
+  test("explains a non-JSON success body", async () => {
+    mockFetch(
+      new Response("<html>maintenance</html>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      })
+    );
+    await assert.rejects(
+      () => apiRequest("/posts", "key"),
+      /Expected JSON from \/posts but got text\/html: <html>maintenance/
+    );
+  });
+
+  test("aborts when the caller cancels", async () => {
+    mock.method(
+      globalThis,
+      "fetch",
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason)
+          );
+        })
+    );
+    const controller = new AbortController();
+    const pending = apiRequest("/posts", "key", undefined, controller.signal);
+    controller.abort();
+    await assert.rejects(pending, /Request cancelled: \/posts/);
+  });
 });
 
 describe("runTool", () => {
   test("wraps successful results in a JSON text block", async () => {
     const result = await runTool(async () => ({ a: 1 }));
     assert.deepEqual(result, {
-      content: [{ type: "text", text: JSON.stringify({ a: 1 }, null, 2) }],
+      content: [{ type: "text", text: JSON.stringify({ a: 1 }) }],
     });
   });
 
@@ -159,7 +282,7 @@ describe("runTool", () => {
     assert.equal(result.isError, true);
     assert.equal(
       result.content[0].text,
-      JSON.stringify({ error: "Error: boom" }, null, 2)
+      JSON.stringify({ error: "boom" })
     );
   });
 });
