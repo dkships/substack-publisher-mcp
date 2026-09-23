@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+## [1.2.0] - 2026-09-22
+
+### Added
+
+- `search_posts` tool wrapping the Publisher API's full-text search (`/posts/search`, 1-100 results).
+- `get_post` `bodyFormat` option: `markdown` (default), `prosemirror` (raw API string), or `none` (metadata only).
+- Tool calls cancelled by the client now abort the in-flight API request instead of running to the 30-second timeout.
+
+### Changed
+
+- **Breaking:** `get_post` returns the body as Markdown by default. Substack sends a JSON-encoded ProseMirror document; on sampled posts the Markdown is 40-60% of the size. Pass `bodyFormat: "prosemirror"` for the previous output.
+- **Breaking:** requires Node.js 22 or later (Node 18 and 20 are end-of-life). CI tests Node 22 and 24.
+- Tool results are compact JSON, roughly halving output tokens.
+- Error messages drop the `Error:` class prefix.
+- Tool descriptions match live API responses: `list_posts` does not return `type`, its `endDate` is exclusive, `next` is `null` on the last page, and subscriber counts have no separate free field (free = total minus paid).
+- Bumped `@modelcontextprotocol/sdk` to 1.30.0 and zod to 4.6.5; `npm audit` reports zero runtime vulnerabilities.
+
+### Fixed
+
+- Network failures report the underlying cause (for example DNS or connection refused) instead of `fetch failed`.
+- API keys are redacted from error messages, and keys containing control characters are rejected at startup.
+- Env vars that map to the same publication name (`SUBSTACK_API_KEY_MAIN` and `SUBSTACK_API_KEY_main`, or `SUBSTACK_API_KEY` and `SUBSTACK_API_KEY_DEFAULT`) no longer register twice; the first wins and a warning goes to stderr. Empty names and whitespace-only keys are skipped, and key values are trimmed.
+- Dates are calendar-checked (`2026-13-45` is rejected), and the URL slugs `.`, `..`, and empty are rejected instead of hitting other endpoints.
+- Empty (204) responses return `null`, and non-JSON responses produce a clear error.
+- README troubleshooting no longer lists a warning the server never emitted.
+
 ## [1.1.0] - 2026-07-09
 
 ### Security

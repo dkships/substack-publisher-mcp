@@ -4,7 +4,7 @@
 MCP server providing Substack Publisher API access. Enables agents to interact with Substack publications programmatically.
 
 ## Tech Stack
-- TypeScript, ES modules, Node 18+
+- TypeScript, ES modules, Node 22+
 - `@modelcontextprotocol/sdk` with stdio transport
 - `zod` for input validation
 - Native `fetch` for Substack Publisher API calls (no HTTP framework)
@@ -19,11 +19,11 @@ MCP server providing Substack Publisher API access. Enables agents to interact w
 - Handle errors with `isError: true` responses
 - Use `registerTool` / `registerResource` for MCP registration
 - Test manually via MCP client after changes
-- Codex has an enabled `found-substack` MCP server pointing at `dist/index.js`; run `npm run build` after source changes before testing through Codex MCP.
+- MCP clients run `dist/index.js`; run `npm run build` after source changes before testing through a client.
 - Use inherited `SUBSTACK_API_KEY_*` env vars; never copy token values into config or docs.
 
 ## Hallucination Prevention
-See `~/.agents/AGENTS.md`. For this MCP server: sources = code and Substack API responses.
+Verify API behavior against the code and live Substack API responses; do not assume.
 
 ## Definition Of Done
 - Changes compile (`npm run build`)
@@ -55,4 +55,4 @@ Adapted from Fabien Sanglard's agent.md (2026-08-21).
 
 ## Maintenance
 - Owner: David Kelly
-- Last Updated: 2026-07-01
+- Last Updated: 2026-09-22
