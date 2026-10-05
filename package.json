@@ -39,11 +39,11 @@
     "url": "https://github.com/dkships/substack-publisher-mcp/issues"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.1",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.6.4",
     "tsx": "^4.23.0",
     "typescript": "^7.0.2"
   },
