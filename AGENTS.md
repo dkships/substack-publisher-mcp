@@ -52,7 +52,3 @@ Adapted from Fabien Sanglard's agent.md (2026-08-21).
 - Imperative mood, capitalized subject, no trailing period. Test: "If applied, this commit will <subject>".
 - Keep the subject under 72 characters. Blank line before the body.
 - The body explains what and why, not how; the code shows the how. Wrap it at 72 characters.
-
-## Maintenance
-- Owner: David Kelly
-- Last Updated: 2026-09-22
