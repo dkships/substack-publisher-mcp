@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # Substack Publisher MCP
 
 MCP server for Substack's official Publisher API. TypeScript, ES modules, `@modelcontextprotocol/sdk` with stdio transport, native `fetch` (no HTTP framework). Setup and tool docs: README.md.
