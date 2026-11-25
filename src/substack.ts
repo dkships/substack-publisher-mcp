@@ -56,6 +56,20 @@ export function loadPublications(
   return pubs;
 }
 
+// --- Write tool opt-in ---
+
+const WRITE_TOOLS_VAR = "SUBSTACK_ENABLE_WRITE_TOOLS";
+const TRUTHY_VALUES = ["true", "1"];
+
+// Write tools email people and grant paid access, so they stay unregistered
+// unless the operator opts in.
+export function writeToolsEnabled(
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  const value = env[WRITE_TOOLS_VAR]?.trim().toLowerCase();
+  return value !== undefined && TRUTHY_VALUES.includes(value);
+}
+
 export function resolvePublication(
   pubs: Publication[],
   requested?: string
@@ -96,15 +110,43 @@ const MAX_SNIPPET_CHARS = 200;
 
 const REDACTED = "[REDACTED]";
 
+type HttpMethod = "GET" | "POST";
+const JSON_MEDIA_TYPE = "application/json";
+
+interface ApiCall {
+  method: HttpMethod;
+  path: string;
+  params?: Record<string, string | undefined>;
+  body?: unknown;
+}
+
 export async function apiRequest(
   path: string,
   apiKey: string,
   params?: Record<string, string | undefined>,
   signal?: AbortSignal
 ): Promise<unknown> {
+  return sendRedacted({ method: "GET", path, params }, apiKey, signal);
+}
+
+// POST with a JSON body, for the endpoints that change subscriber state.
+export async function apiPost(
+  path: string,
+  apiKey: string,
+  body: unknown,
+  signal?: AbortSignal
+): Promise<unknown> {
+  return sendRedacted({ method: "POST", path, body }, apiKey, signal);
+}
+
+async function sendRedacted(
+  call: ApiCall,
+  apiKey: string,
+  signal?: AbortSignal
+): Promise<unknown> {
   // Keys must never reach the model, even if an error body echoes them.
   try {
-    return await sendRequest(path, apiKey, params, signal);
+    return await sendRequest(call, apiKey, signal);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(message.replaceAll(apiKey, REDACTED));
@@ -112,9 +154,8 @@ export async function apiRequest(
 }
 
 async function sendRequest(
-  path: string,
+  { method, path, params, body }: ApiCall,
   apiKey: string,
-  params?: Record<string, string | undefined>,
   signal?: AbortSignal
 ): Promise<unknown> {
   const url = new URL(`${BASE_URL}${path}`);
@@ -127,15 +168,22 @@ async function sendRequest(
     }
   }
 
+  const headers: Record<string, string> = {
+    authorization: apiKey,
+    accept: JSON_MEDIA_TYPE,
+  };
+  if (body !== undefined) {
+    headers["content-type"] = JSON_MEDIA_TYPE;
+  }
+
   const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
 
   let response: Response;
   try {
     response = await fetch(url.toString(), {
-      headers: {
-        authorization: apiKey,
-        accept: "application/json",
-      },
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
       signal: signal ? AbortSignal.any([timeout, signal]) : timeout,
     });
   } catch (error) {

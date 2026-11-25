@@ -2,10 +2,12 @@ import { afterEach, describe, mock, test } from "node:test";
 import assert from "node:assert/strict";
 import {
   BASE_URL,
+  apiPost,
   apiRequest,
   loadPublications,
   resolvePublication,
   runTool,
+  writeToolsEnabled,
 } from "./substack.js";
 
 describe("loadPublications", () => {
@@ -264,6 +266,79 @@ describe("apiRequest", () => {
     const pending = apiRequest("/posts", "key", undefined, controller.signal);
     controller.abort();
     await assert.rejects(pending, /Request cancelled: \/posts/);
+  });
+});
+
+describe("apiPost", () => {
+  afterEach(() => mock.restoreAll());
+
+  test("sends a JSON body with POST", async () => {
+    const fetchMock = mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response(JSON.stringify({ ok: true }), { status: 200 })
+    );
+
+    const data = await apiPost("/subscribers", "key-123", {
+      emailAddresses: ["a@example.com"],
+    });
+
+    assert.deepEqual(data, { ok: true });
+    const [url, init] = fetchMock.mock.calls[0].arguments as [
+      string,
+      RequestInit,
+    ];
+    assert.equal(url, `${BASE_URL}/subscribers`);
+    assert.equal(init.method, "POST");
+    assert.equal(init.body, '{"emailAddresses":["a@example.com"]}');
+
+    const headers = init.headers as Record<string, string>;
+    assert.equal(headers.authorization, "key-123");
+    assert.equal(headers["content-type"], "application/json");
+  });
+
+  test("returns null for a 202 with no body", async () => {
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response(null, { status: 202 })
+    );
+    assert.equal(await apiPost("/subscribers", "key", {}), null);
+  });
+
+  test("redacts the API key from error messages", async () => {
+    mock.method(
+      globalThis,
+      "fetch",
+      async () => new Response("bad key sk-abc", { status: 400 })
+    );
+    await assert.rejects(
+      () => apiPost("/subscribers", "sk-abc", {}),
+      (error: Error) => {
+        assert.match(error.message, /API error \(400\)/);
+        assert.doesNotMatch(error.message, /sk-abc/);
+        return true;
+      }
+    );
+  });
+});
+
+describe("writeToolsEnabled", () => {
+  test("is off unless explicitly enabled", () => {
+    assert.equal(writeToolsEnabled({}), false);
+    assert.equal(writeToolsEnabled({ SUBSTACK_ENABLE_WRITE_TOOLS: "" }), false);
+    assert.equal(
+      writeToolsEnabled({ SUBSTACK_ENABLE_WRITE_TOOLS: "false" }),
+      false
+    );
+  });
+
+  test("accepts true and 1, ignoring case and whitespace", () => {
+    assert.equal(
+      writeToolsEnabled({ SUBSTACK_ENABLE_WRITE_TOOLS: " TRUE " }),
+      true
+    );
+    assert.equal(writeToolsEnabled({ SUBSTACK_ENABLE_WRITE_TOOLS: "1" }), true);
   });
 });
 

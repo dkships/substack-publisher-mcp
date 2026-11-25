@@ -6,12 +6,12 @@
     "url": "https://github.com/dkships/substack-publisher-mcp",
     "source": "github"
   },
-  "version": "1.2.0",
+  "version": "1.3.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "substack-publisher-mcp",
-      "version": "1.2.0",
+      "version": "1.3.0",
       "transport": {
         "type": "stdio"
       },
@@ -22,6 +22,13 @@
           "format": "string",
           "isSecret": true,
           "name": "SUBSTACK_API_KEY"
+        },
+        {
+          "description": "Set to true to register the tools that change subscriber data (import_subscribers, comp_subscription). Off by default.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SUBSTACK_ENABLE_WRITE_TOOLS"
         }
       ]
     }
