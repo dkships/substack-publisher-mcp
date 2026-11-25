@@ -5,18 +5,27 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import {
+  apiPost,
   apiRequest,
   errorResult,
   jsonResult,
   loadPublications,
   resolvePublication,
   runTool,
+  writeToolsEnabled,
 } from "./substack.js";
 import {
   BODY_FORMATS,
   DEFAULT_BODY_FORMAT,
   formatPostBody,
 } from "./post-body.js";
+import {
+  COMP_DEFAULT_DAYS,
+  IMPORT_MAX_EMAILS,
+  LIFETIME,
+  SECTION_EMAIL_SETTINGS,
+  compRequestBody,
+} from "./subscribers.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as {
   version: string;
@@ -29,10 +38,19 @@ const server = new McpServer({
   version,
 });
 
-// Every tool is a read-only GET against an external API.
+// Read tools are GETs against an external API.
 const readOnlyAnnotations = {
   readOnlyHint: true,
   idempotentHint: true,
+  openWorldHint: true,
+};
+
+// Write tools add or extend subscriptions and can send email. They remove
+// nothing, but repeating a call can extend a comp or resend a welcome email.
+const writeAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
   openWorldHint: true,
 };
 
@@ -64,6 +82,12 @@ const urlSlugParam = z
 // Upper bound documented in the Publisher API spec for /posts/search.
 const SEARCH_MAX_RESULTS = 100;
 const SEARCH_MAX_QUERY_CHARS = 512;
+
+// Section IDs are int32 in the Publisher API spec.
+const MAX_SECTION_ID = 2_147_483_647;
+const sectionIdSchema = z.number().int().min(1).max(MAX_SECTION_ID);
+
+const emailSchema = z.string().email();
 
 // Tool 1: list_publications
 server.registerTool(
@@ -99,7 +123,7 @@ server.registerTool(
   {
     title: "List Posts",
     description:
-      "List posts published by a Substack publication. Returns { posts, next }: each post has post_id, title, subtitle, audience, postDate, urlSlug, and coverImage. `next` is a cursor for the following page, or null on the last page. Use urlSlug with get_post or get_post_stats.",
+      "List posts published by a Substack publication. Returns { posts, next }: each post has post_id, title, subtitle, audience, postDate, urlSlug, coverImage, and section ({ id, name, slug }, or null for the main publication). `next` is a cursor for the following page, or null on the last page. Use urlSlug with get_post or get_post_stats.",
     annotations: readOnlyAnnotations,
     inputSchema: {
       publication: publicationParam,
@@ -117,6 +141,11 @@ server.registerTool(
         .enum(["newsletter", "podcast", "video"])
         .optional()
         .describe("Filter by post type."),
+      sectionId: sectionIdSchema
+        .optional()
+        .describe(
+          "Only return posts published in this section. Section IDs come from each post's `section.id`."
+        ),
       maxResults: z
         .number()
         .int()
@@ -134,7 +163,16 @@ server.registerTool(
     },
   },
   async (
-    { publication, startDate, endDate, sortBy, type, maxResults, next },
+    {
+      publication,
+      startDate,
+      endDate,
+      sortBy,
+      type,
+      sectionId,
+      maxResults,
+      next,
+    },
     { signal }
   ) =>
     runTool(async () => {
@@ -147,6 +185,7 @@ server.registerTool(
           endDate,
           sortBy,
           type,
+          sectionId: sectionId?.toString(),
           maxResults: maxResults?.toString(),
           next,
         },
@@ -197,7 +236,7 @@ server.registerTool(
   {
     title: "Get Post",
     description:
-      "Get a post by its URL slug, including its full body. Returns post_id, title, subtitle, audience, postDate, urlSlug, coverImage, authors, and body (Markdown by default).",
+      "Get a post by its URL slug, including its full body. Returns post_id, title, subtitle, audience, postDate, urlSlug, coverImage, authors, section, and body (Markdown by default).",
     annotations: readOnlyAnnotations,
     inputSchema: {
       publication: publicationParam,
@@ -229,7 +268,7 @@ server.registerTool(
   {
     title: "Get Post Stats",
     description:
-      "Get engagement statistics for a post by its URL slug: recipients, opens, clicks, views, new free and paid subscriptions, and estimated revenue increase, plus podcast and video metrics when applicable.",
+      "Get engagement statistics for a post by its URL slug: recipients, opens, clicks, views, new free and paid subscriptions, and estimated revenue increase. Podcast and video posts add podcast downloads, Apple Podcasts and Spotify downloads, video plays, and minutes watched when available.",
     annotations: readOnlyAnnotations,
     inputSchema: {
       publication: publicationParam,
@@ -280,11 +319,11 @@ server.registerTool(
   {
     title: "Get Subscriber",
     description:
-      "Look up a subscriber by email address. Returns membershipType (paying, comp, free, gift), expiry, firstPaymentAt, nextChargeDate, subscription plan details, hasBounce, and social handles. Errors with 404 if the address is not a subscriber.",
+      "Look up a subscriber by email address. Returns user_id, subscription_id, membershipType (paying, comp, free, gift), expiry, firstPaymentAt, nextChargeDate, subscription plan details, stripe_customer_id, hasBounce, and social handles. Errors with 404 if the address is not a subscriber.",
     annotations: readOnlyAnnotations,
     inputSchema: {
       publication: publicationParam,
-      email: z.string().email().describe("The subscriber's email address."),
+      email: emailSchema.describe("The subscriber's email address."),
     },
   },
   async ({ publication, email }, { signal }) =>
@@ -299,13 +338,127 @@ server.registerTool(
     })
 );
 
+// --- Write tools (opt-in) ---
+//
+// Registered only when SUBSTACK_ENABLE_WRITE_TOOLS is set, so a default
+// install stays read-only.
+
+function registerWriteTools() {
+  // Tool 8: import_subscribers
+  server.registerTool(
+    "import_subscribers",
+    {
+      title: "Import Subscribers",
+      description: `Add up to ${IMPORT_MAX_EMAILS} email addresses as subscribers to a publication. This changes the subscriber list and, unless sendWelcomeEmails is false, emails every address. Substack queues the import, so new subscribers can take a moment to appear. Confirm the list with the user before calling.`,
+      annotations: writeAnnotations,
+      inputSchema: {
+        publication: publicationParam,
+        emailAddresses: z
+          .array(emailSchema)
+          .min(1)
+          .max(IMPORT_MAX_EMAILS)
+          .describe(
+            `Email addresses to subscribe (1-${IMPORT_MAX_EMAILS} per call).`
+          ),
+        sendWelcomeEmails: z
+          .boolean()
+          .optional()
+          .describe(
+            "Whether Substack sends each address a welcome email. Defaults to true."
+          ),
+        source: z
+          .string()
+          .min(1)
+          .optional()
+          .describe("Optional source label passed to Substack with the import."),
+      },
+    },
+    async (
+      { publication, emailAddresses, sendWelcomeEmails, source },
+      { signal }
+    ) =>
+      runTool(async () => {
+        const pub = resolvePublication(publications, publication);
+        const response = await apiPost(
+          "/subscribers",
+          pub.apiKey,
+          { emailAddresses, sendWelcomeEmails, source },
+          signal
+        );
+
+        // The API answers 202 with no body; report what was submitted.
+        return (
+          response ?? { status: "accepted", submitted: emailAddresses.length }
+        );
+      })
+  );
+
+  // Tool 9: comp_subscription
+  server.registerTool(
+    "comp_subscription",
+    {
+      title: "Comp Subscription",
+      description: `Grant an email address free access to a paid subscription. Creates the subscription if the address is not a subscriber, and extends it if the address already has a paid one. Pass subscriptionLength or expirationDate, not both; with neither, the comp runs ${COMP_DEFAULT_DAYS} days. Returns { expirationDate }. This gives away paid access and repeating the call can extend it further, so confirm with the user before calling.`,
+      annotations: writeAnnotations,
+      inputSchema: {
+        publication: publicationParam,
+        email: emailSchema.describe("The email address to comp."),
+        subscriptionLength: z
+          .union([z.number().int().min(1), z.literal(LIFETIME)])
+          .optional()
+          .describe(
+            `Number of days to comp, or '${LIFETIME}'. Defaults to ${COMP_DEFAULT_DAYS} days.`
+          ),
+        expirationDate: z.iso
+          .datetime({ error: "Use an ISO 8601 UTC date-time" })
+          .optional()
+          .describe(
+            "Exact expiry in ISO 8601 UTC (e.g., 2027-12-31T23:59:59Z). Must be after the current expiry."
+          ),
+        sendWelcomeEmails: z
+          .boolean()
+          .optional()
+          .describe(
+            "Whether Substack emails the subscriber about the comp. Defaults to true."
+          ),
+        sectionEmailSettings: z
+          .array(
+            z.object({
+              sectionId: sectionIdSchema,
+              setting: z.enum(SECTION_EMAIL_SETTINGS),
+            })
+          )
+          .optional()
+          .describe(
+            "Per-section email settings: 'on' sends that section's emails, 'off' does not. Overrides section defaults; the subscriber's own settings still win."
+          ),
+      },
+    },
+    async ({ publication, email, ...compRequest }, { signal }) =>
+      runTool(async () => {
+        const pub = resolvePublication(publications, publication);
+        return apiPost(
+          `/subscribers/comp/${encodeURIComponent(email)}`,
+          pub.apiKey,
+          compRequestBody(compRequest),
+          signal
+        );
+      })
+  );
+}
+
+const writesEnabled = writeToolsEnabled();
+if (writesEnabled) {
+  registerWriteTools();
+}
+
 // --- Start server ---
 
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error(
-    `substack-publisher-mcp running (${publications.length} publication(s) configured)`
+    `substack-publisher-mcp running (${publications.length} publication(s) configured, write tools ${writesEnabled ? "enabled" : "disabled"})`
   );
 }
 

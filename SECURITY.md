@@ -18,7 +18,7 @@ Expected response: acknowledgement within 5 business days. If the report is vali
 ## What's in scope
 
 - The MCP server itself (`src/`, `dist/`)
-- API key handling and publication resolution (`src/index.ts`)
+- API key handling and publication resolution (`src/substack.ts`)
 - npm package supply chain (`package.json`, `package-lock.json`)
 
 ## What's out of scope
@@ -30,7 +30,7 @@ Expected response: acknowledgement within 5 business days. If the report is vali
 
 ## Data handling
 
-This is a read-only server. It forwards your Substack API key in the `authorization` header and returns whatever the Publisher API sends back. Tool responses can include subscriber-level data such as email addresses and subscriber counts (`get_subscriber`, `get_subscriber_counts`). Treat tool output as sensitive:
+The server is read-only unless you set `SUBSTACK_ENABLE_WRITE_TOOLS=true`, which registers two tools that change subscriber data (`import_subscribers`, `comp_subscription`). It forwards your Substack API key in the `authorization` header and returns whatever the Publisher API sends back. Tool responses can include subscriber-level data such as email addresses and subscriber counts (`get_subscriber`, `get_subscriber_counts`). Treat tool output as sensitive:
 
 - The server does not store, cache, or transmit your data anywhere other than between your MCP client and the Substack Publisher API.
 - The API key is read from environment variables only (`SUBSTACK_API_KEY` / `SUBSTACK_API_KEY_<NAME>`). It is never written to disk or logged, and it is redacted from error messages if the API echoes it back.
@@ -39,6 +39,7 @@ This is a read-only server. It forwards your Substack API key in the `authorizat
 
 ## Hardening notes for operators
 
+- Leave `SUBSTACK_ENABLE_WRITE_TOOLS` unset unless you need the write tools, and keep your client's per-call approval on for them. Post bodies and subscriber fields are untrusted text that an agent reads; with auto-approved write tools, injected instructions in that text could import addresses or comp a subscription.
 - Treat `.env` as a credential file. Do not commit it. Do not paste its contents into chat logs or issue trackers.
 - Use a separate Substack API key per publication, scoped to the publications you actually need.
 - The server only speaks stdio (`StdioServerTransport`); it does not bind a network port. If you wrap it in a network-exposed transport, you are responsible for authentication.

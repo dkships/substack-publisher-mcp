@@ -8,7 +8,7 @@
 
 > **Note:** This is an unofficial, community-developed tool and is not affiliated with, endorsed by, or supported by Substack, Inc.
 
-An MCP server for Substack's official [Publisher API](https://publisher-api.substack.com/v1/docs/). Search and read posts, pull post analytics and subscriber counts, and look up subscribers from Claude, Cursor, or any MCP client. All tools are read-only.
+An MCP server for Substack's official [Publisher API](https://publisher-api.substack.com/v1/docs/). Search and read posts, pull post analytics and subscriber counts, and look up subscribers from Claude, Cursor, or any MCP client. The server is read-only by default; tools that import subscribers and comp subscriptions are [opt-in](#write-tools-opt-in).
 
 ![Demo of substack-publisher-mcp in Claude Code](demo.gif)
 
@@ -84,7 +84,7 @@ Ask Claude (or your MCP client):
 | Tool | Description | Key Parameters |
 |------|-------------|----------------|
 | `list_publications` | List configured publications | None |
-| `list_posts` | List published posts | `startDate`, `endDate`, `sortBy`, `type`, `maxResults`, `next` |
+| `list_posts` | List published posts | `startDate`, `endDate`, `sortBy`, `type`, `sectionId`, `maxResults`, `next` |
 | `search_posts` | Full-text search across published posts | `query` (required), `maxResults` (1-100) |
 | `get_post` | Get a post and its body by URL slug | `urlSlug` (required), `bodyFormat` |
 | `get_post_stats` | Get engagement stats for a post | `urlSlug` (required) |
@@ -96,6 +96,31 @@ All tools except `list_publications` accept an optional `publication` parameter 
 `get_post` returns the post body as Markdown by default. Substack sends it as a JSON-encoded ProseMirror document, typically about twice the size. Pass `bodyFormat: "prosemirror"` for the raw document or `"none"` for metadata only.
 
 Date filters take `YYYY-MM-DD`. In `list_posts`, `endDate` is exclusive; in `get_subscriber_counts`, it is inclusive.
+
+Each post carries a `section` (`{ id, name, slug }`, or `null` for the main publication). Pass a section's `id` as `sectionId` to `list_posts` to list only that section.
+
+### Write tools (opt-in)
+
+Two tools change subscriber data. They are not registered unless you set `SUBSTACK_ENABLE_WRITE_TOOLS` to `true` in the server's `env`:
+
+```json
+"env": {
+  "SUBSTACK_API_KEY": "your-api-key-here",
+  "SUBSTACK_ENABLE_WRITE_TOOLS": "true"
+}
+```
+
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `import_subscribers` | Add up to 100 email addresses as subscribers | `emailAddresses` (required), `sendWelcomeEmails`, `source` |
+| `comp_subscription` | Grant an email address free access to a paid subscription | `email` (required), `subscriptionLength` (days or `"lifetime"`) or `expirationDate`, `sendWelcomeEmails`, `sectionEmailSettings` |
+
+Both act on your live publication and neither can be undone through this server:
+
+- `import_subscribers` emails every address a welcome message unless `sendWelcomeEmails` is `false`. Substack queues the import, so the tool returns `{ "status": "accepted", "submitted": <count> }` before the subscribers appear.
+- `comp_subscription` creates a subscription if the address has none and extends an existing paid one. With neither `subscriptionLength` nor `expirationDate` it comps 30 days; passing both is an error. It returns the new `expirationDate`.
+
+Keep your MCP client's approval prompt on for these tools. Post bodies and subscriber data are untrusted text, and an agent that reads them with auto-approved write tools could be talked into comping an address you never chose.
 
 ### Example responses
 
@@ -133,6 +158,8 @@ Date filters take `YYYY-MM-DD`. In `list_posts`, `endDate` is exclusive; in `get
   "estimated_revenue_increase": 400
 }
 ```
+
+Podcast and video posts add `podcast_downloads`, `podcast_preview_downloads`, `apple_podcasts_downloads`, `apple_podcasts_downloads_day30`, `spotify_downloads`, `spotify_preview_downloads`, `video_plays`, and `video_minutes_watched` when Substack has them.
 </details>
 
 <details>
@@ -148,14 +175,15 @@ Date filters take `YYYY-MM-DD`. In `list_posts`, `endDate` is exclusive; in `get
       "subtitle": "A deep dive into the topic",
       "postDate": "2025-01-15T12:00:00.000Z",
       "urlSlug": "my-latest-post",
-      "coverImage": "https://substackcdn.com/image/..."
+      "coverImage": "https://substackcdn.com/image/...",
+      "section": { "id": 4821, "name": "Deep Dives", "slug": "deep-dives" }
     }
   ],
   "next": "abc123cursor"
 }
 ```
 
-`next` is `null` on the last page.
+`next` is `null` on the last page. `section` is `null` for posts in the main publication.
 </details>
 
 ## Multiple publications
@@ -193,6 +221,7 @@ Use `list_publications` to see all configured publication names.
 | `... duplicates publication ...` or `... ignoring it` on startup | Two env vars map to the same publication name (names are case-insensitive, and `SUBSTACK_API_KEY` is `default`), or a key is malformed. Rename or remove the extra variable. |
 | Server won't start | Make sure you ran `npm run build` after cloning. The server runs from `dist/`, not `src/`. |
 | `No API keys configured` | Set `SUBSTACK_API_KEY` or `SUBSTACK_API_KEY_<NAME>` in your MCP client config. |
+| `import_subscribers` / `comp_subscription` missing | Write tools are off by default. Set `SUBSTACK_ENABLE_WRITE_TOOLS` to `true` and restart the client. |
 | Server doesn't appear in your client | Check the config file is valid JSON (no trailing commas), then restart the client. |
 | `command not found` / `spawn node ENOENT` | Node.js isn't installed or isn't on your PATH. Check `node --version`. |
 | Still stuck | Check your client's MCP logs. Claude Desktop on macOS: `~/Library/Logs/Claude/mcp*.log`. |

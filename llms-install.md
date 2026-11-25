@@ -1,6 +1,6 @@
 # substack-publisher-mcp
 
-MCP server for Substack's official Publisher API. Query posts, analytics, and subscriber data from any MCP client.
+MCP server for Substack's official Publisher API. Query posts, analytics, and subscriber data from any MCP client. Read-only by default; subscriber write tools are opt-in.
 
 ## Prerequisites
 
@@ -31,6 +31,12 @@ SUBSTACK_API_KEY_MAIN=your-main-blog-key
 SUBSTACK_API_KEY_TECH=your-tech-newsletter-key
 ```
 
+Two tools change subscriber data (`import_subscribers`, `comp_subscription`). They are registered only when this is set; leave it unset for a read-only server:
+
+```
+SUBSTACK_ENABLE_WRITE_TOOLS=true
+```
+
 ## MCP Client Configuration
 
 ```json
@@ -56,3 +62,8 @@ SUBSTACK_API_KEY_TECH=your-tech-newsletter-key
 - `get_post_stats` — Get engagement stats for a post
 - `get_subscriber_counts` — Get daily subscriber counts by type
 - `get_subscriber` — Look up a subscriber by email
+
+Only with `SUBSTACK_ENABLE_WRITE_TOOLS=true` (both act on the live publication; confirm with the user before calling):
+
+- `import_subscribers` — Add up to 100 email addresses as subscribers (sends welcome emails by default)
+- `comp_subscription` — Grant an email address free access to a paid subscription

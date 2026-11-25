@@ -4,6 +4,22 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-25
+
+### Added
+
+- Opt-in write tools, registered only when `SUBSTACK_ENABLE_WRITE_TOOLS=true`: `import_subscribers` (`POST /subscribers`, up to 100 addresses) and `comp_subscription` (`POST /subscribers/comp/{email}`). A default install stays read-only.
+- `list_posts` `sectionId` filter, matching the Publisher API's new section support.
+
+### Changed
+
+- Tool descriptions match the current Publisher API spec: posts carry `section`, `get_post_stats` lists the Apple Podcasts and Spotify metrics, and `get_subscriber` lists `user_id`, `subscription_id`, and `stripe_customer_id`.
+- The startup log line reports whether write tools are enabled.
+
+### Security
+
+- Bumped the `hono` transitive dependency to 4.13.22, clearing a moderate advisory; `npm audit` reports zero runtime vulnerabilities.
+
 ## [1.2.0] - 2026-09-22
 
 ### Added
