@@ -30,7 +30,7 @@ npm start
 
 - Keep changes focused and minimal
 - Test with a real Substack Publisher API key before submitting
-- This is a read-only MCP server (v1) — write operations will be considered for v2
+- The server is read-only by default. Tools that change data register only behind `SUBSTACK_ENABLE_WRITE_TOOLS` and are tested against a mocked `fetch`, never a live publication
 - Follow existing code patterns and TypeScript strict mode
 
 ## Reporting Issues
